@@ -1,20 +1,23 @@
 # claude-project-status (Warp Edition)
 
-Claude project detection for [Warp Terminal](https://www.warp.dev/). Shows the current Claude project in Warp's **tab title** — zero interference with Warp's prompt rendering.
+Claude project detection for [Warp Terminal](https://www.warp.dev/). Shows the current Claude project **in Warp's prompt bar** — right next to the git branch, using [Starship](https://starship.rs/).
 
 ```
-┌─ metale [claude md,local] ─────────────────────────┐
-│ $ ls                                                │
-│ src/  CLAUDE.md  .claude/                           │
-└─────────────────────────────────────────────────────┘
-  ↑ project info in Warp's tab/session title
+~/lab/metale   main  ⚡metale md,local
+                              └──────────────────┘
+                              appears in Claude projects
 ```
 
 ## Why a Warp-specific version?
 
-Warp renders its own prompt and ignores the shell's `PROMPT`/`RPROMPT`/`PS1` by default. Standard shell prompt integrations either don't show up or break Warp's UI.
+Warp renders its own prompt bar and ignores the shell's `PROMPT`/`PS1`. Standard prompt integrations don't show up or break Warp's UI.
 
-This version uses **OSC title escape sequences** (`\e]0;...\a`) which Warp natively renders in tab titles and block headers. No PROMPT or RPROMPT is touched.
+This version uses **Starship** (which Warp natively supports) to add a Claude project segment directly in the prompt bar, alongside directory and git info.
+
+## Prerequisites
+
+- [Warp Terminal](https://www.warp.dev/)
+- [Starship](https://starship.rs/) — install with `brew install starship`
 
 ## Install
 
@@ -24,13 +27,9 @@ git clone https://github.com/stamate/claude-project-status-warp.git ~/.claude-pr
 exec $SHELL
 ```
 
-### Manual
-
-Add to `~/.zshrc`:
-
-```zsh
-source ~/.claude-project-status/claude-project-status.zsh
-```
+The installer will:
+1. Add Starship init to your `~/.zshrc`
+2. Create `~/.config/starship.toml` with git + Claude project modules (or add the Claude module to your existing config)
 
 ### Uninstall
 
@@ -39,16 +38,6 @@ source ~/.claude-project-status/claude-project-status.zsh
 rm -rf ~/.claude-project-status
 exec $SHELL
 ```
-
-## What It Does
-
-When you `cd` into a Claude project, the Warp tab title updates to:
-
-```
-metale [claude md,local]
-```
-
-When you `cd` out, the title resets to the current directory name.
 
 ## What It Detects
 
@@ -76,11 +65,15 @@ $ claude-project-info --quiet && echo "yes"
 yes
 ```
 
-Make it globally available:
-
-```sh
-./install.sh --link
-```
+| Flag | Description |
+|------|-------------|
+| `-j, --json` | JSON output |
+| `-q, --quiet` | Exit code only (0 = project, 1 = not) |
+| `-r, --root` | Print project root path |
+| `-n, --name` | Print project name |
+| `-f, --flags` | Print flags |
+| `-s, --sessions` | Include session count |
+| `--format STR` | Custom format (`%n` = name, `%f` = flags, `%r` = root) |
 
 ## Configuration
 
@@ -89,6 +82,16 @@ Make it globally available:
 | `CLAUDE_PROMPT_DISABLE=1` | Disable the integration |
 | `CLAUDE_PROJECT_ROOT=/path` | Override detected root |
 
+### Customizing the Starship segment
+
+Edit `~/.config/starship.toml`:
+
+```toml
+[custom.claude]
+format = "[⚡$output]($style) "   # change icon/format
+style = "bold purple"              # change color
+```
+
 ## Performance
 
 | Scenario | Time |
@@ -96,19 +99,7 @@ Make it globally available:
 | Cache hit (same dir) | ~0ms |
 | Cache miss (dir changed) | ~2ms |
 
-Pure POSIX shell — no dependencies.
-
-## Files
-
-```
-claude-project-status.zsh    # Warp integration (precmd → tab title)
-bin/claude-project-info      # CLI tool
-lib/detect.sh                # Walk-up detection + caching
-lib/encode.sh                # Path encoding for session lookups
-install.sh                   # Installer
-uninstall.sh                 # Uninstaller
-test/run_tests.sh            # Test suite
-```
+Pure POSIX shell — no dependencies beyond Starship.
 
 ## License
 
