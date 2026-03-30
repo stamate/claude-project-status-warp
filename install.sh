@@ -86,9 +86,13 @@ chmod +x "$CPS_ROOT/bin/claude-project-info"
 if grep -qF "$MARKER" "$ZSHRC" 2>/dev/null; then
     printf 'Already installed in %s\n' "$ZSHRC"
 else
-    printf '\nexport WARP_HONOR_PS1=1 %s\n' "$MARKER" >> "$ZSHRC"
-    printf 'eval "$(starship init zsh)" %s\n' "$MARKER" >> "$ZSHRC"
+    printf '\neval "$(starship init zsh)" %s\n' "$MARKER" >> "$ZSHRC"
     printf 'Added starship init to %s\n' "$ZSHRC"
+    # Warp users: enable Settings → Appearance → Prompt → "Shell prompt (PS1)"
+    if [ "$TERM_PROGRAM" = "WarpTerminal" ]; then
+        printf '\n  NOTE: In Warp, go to Settings → Appearance → Prompt → select "Shell prompt (PS1)"\n'
+        printf '  This makes Starship (with Claude info) appear in all tabs.\n'
+    fi
 fi
 
 # --- Create or update starship.toml ---

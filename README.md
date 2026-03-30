@@ -27,6 +27,10 @@ git clone https://github.com/stamate/claude-project-status-warp.git ~/.claude-pr
 exec $SHELL
 ```
 
+Then in Warp: **Settings → Appearance → Prompt → select "Shell prompt (PS1)"**
+
+This tells Warp to use Starship's prompt (with Claude info) instead of its native prompt bar. Without this setting, Warp ignores custom prompts.
+
 The installer will:
 1. Add Starship init to your `~/.zshrc`
 2. Create `~/.config/starship.toml` with git + Claude project modules (or add the Claude module to your existing config)
