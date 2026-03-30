@@ -86,7 +86,8 @@ chmod +x "$CPS_ROOT/bin/claude-project-info"
 if grep -qF "$MARKER" "$ZSHRC" 2>/dev/null; then
     printf 'Already installed in %s\n' "$ZSHRC"
 else
-    printf '\neval "$(starship init zsh)" %s\n' "$MARKER" >> "$ZSHRC"
+    printf '\nexport WARP_HONOR_PS1=1 %s\n' "$MARKER" >> "$ZSHRC"
+    printf 'eval "$(starship init zsh)" %s\n' "$MARKER" >> "$ZSHRC"
     printf 'Added starship init to %s\n' "$ZSHRC"
 fi
 
