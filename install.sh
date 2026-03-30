@@ -11,6 +11,7 @@ STARSHIP_CONFIG="$HOME/.config/starship.toml"
 case "${1:-}" in
     --uninstall)
         printf 'Uninstalling claude-project-status...\n'
+
         # Remove our line from .zshrc
         for rc in "$ZSHRC" "$HOME/.bashrc"; do
             if [ -f "$rc" ] && grep -qF "$MARKER" "$rc"; then
@@ -20,11 +21,42 @@ case "${1:-}" in
                 printf '  Removed from %s\n' "$rc"
             fi
         done
-        # Remove claude module from starship.toml (leave rest intact)
+
+        # Remove claude module from starship.toml
         if [ -f "$STARSHIP_CONFIG" ] && grep -q 'custom.claude' "$STARSHIP_CONFIG"; then
-            printf '  Note: Claude module left in %s — remove [custom.claude] section manually if desired\n' "$STARSHIP_CONFIG"
+            tmp=$(mktemp)
+            awk '
+                /^\[custom\.claude\]/ { skip=1; next }
+                /^\[/ && skip { skip=0 }
+                !skip { print }
+            ' "$STARSHIP_CONFIG" | sed '/^# Claude project status$/d' > "$tmp"
+            mv "$tmp" "$STARSHIP_CONFIG"
+            printf '  Removed Claude module from %s\n' "$STARSHIP_CONFIG"
         fi
-        [ -L "$HOME/.local/bin/claude-project-info" ] && rm "$HOME/.local/bin/claude-project-info" && printf '  Removed CLI symlink\n'
+
+        # Remove starship.toml entirely if we created it and it has no user content left
+        if [ -f "$STARSHIP_CONFIG" ]; then
+            # Check if only our boilerplate remains (no custom sections besides ours)
+            remaining=$(grep -c '^\[' "$STARSHIP_CONFIG" 2>/dev/null || true)
+            if [ "$remaining" -eq 0 ]; then
+                rm "$STARSHIP_CONFIG"
+                printf '  Removed empty %s\n' "$STARSHIP_CONFIG"
+            fi
+        fi
+
+        # Remove CLI symlink
+        if [ -L "$HOME/.local/bin/claude-project-info" ]; then
+            rm "$HOME/.local/bin/claude-project-info"
+            printf '  Removed CLI symlink\n'
+        fi
+
+        # Remove the cloned repo directory
+        if [ -d "$CPS_ROOT" ] && [ -f "$CPS_ROOT/claude-project-status.zsh" ]; then
+            printf '  Removing %s\n' "$CPS_ROOT"
+            # Can't rm ourselves while running — schedule removal after script exits
+            trap "rm -rf '$CPS_ROOT'" EXIT
+        fi
+
         printf 'Done. Run: exec $SHELL\n'
         exit 0 ;;
     --link)
